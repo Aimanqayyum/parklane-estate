@@ -33,11 +33,11 @@ Update this list as work lands (`[x]` when done and committed). A new session re
 - [x] 6.1 `PropertyCard` / `PropertyGrid`
 - [x] 6.2 `PropertyDetail`
 - [x] 6.3 `FeaturedProperties`
-- [ ] 7.1 Delete `Index.tsx` / `SupabaseTest.tsx`
-- [ ] 7.2 No `property_type` left outside migrations
-- [ ] 7.3 `CLAUDE.md` architecture notes updated
-- [ ] 7.4 Mark intent / spec as implemented
-- [ ] 8.1 to 8.6 Release steps (some done by the database owner; note who and when)
+- [x] 7.1 Delete `Index.tsx` / `SupabaseTest.tsx`
+- [x] 7.2 No `property_type` left outside migrations
+- [x] 7.3 `CLAUDE.md` architecture notes updated
+- [x] 7.4 Mark intent / spec as implemented
+- [ ] 8.1 to 8.6 Release steps (some done by the database owner; note who and when). 8.1 automated run: passed 2026-10-16 (lint = baseline 5 errors, build ok, 83 tests). 8.2 to 8.6 pending.
 
 ### Baseline (task 0.2, 2026-10-16, before any change)
 

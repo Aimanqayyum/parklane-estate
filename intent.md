@@ -1,6 +1,6 @@
 # Intent: Buy / Rent mega-menu navigation
 
-Status: DRAFT, for review. Next steps: intent → spec → plan → implementation.
+Status: **IMPLEMENTED in code** (branch `feature/buy-rent-menu`, plan phases 0 to 7). Not yet released: the migrations are applied by the database owner and the code is deployed in plan Phase 8.
 
 ## Goal
 

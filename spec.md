@@ -1,7 +1,7 @@
 # Spec: Buy / Rent mega-menu navigation
 
 Status: **APPROVED** (database design approved by the project owner; decisions in section 14 resolved).
-Derived from: `intent.md`. Next steps: plan (`plan.md`) → implementation.
+Derived from: `intent.md`. Implemented in code per `plan.md` phases 0 to 7; release steps (plan Phase 8) are still pending.
 
 ## 1. Scope
 
