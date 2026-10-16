@@ -3,6 +3,8 @@
  import { Bed, Bath, Maximize, Heart, Check, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
  import { formatPrice, formatArea } from '@/utils/formatPrice';
  import { cn } from '@/lib/utils';
+ import { useListingMenu } from '@/hooks/useListingMenu';
+ import { whatsappUrl } from '@/utils/whatsapp';
  import type { PropertyListItem } from '@/types/property';
  
  interface PropertyCardProps {
@@ -12,6 +14,7 @@
  const PropertyCard = ({ property }: PropertyCardProps) => {
    const [currentImageIndex, setCurrentImageIndex] = useState(0);
    const [isSaved, setIsSaved] = useState(false);
+   const { menu } = useListingMenu();
  
    const {
      slug,
@@ -24,6 +27,12 @@
      images,
      status,
    } = property;
+ 
+   const purpose = menu.find((p) => p.slug === property.purpose);
+   const categoryLabel = purpose?.categories.find((c) => c.slug === property.category)?.label;
+   const priceSuffix = purpose?.priceSuffix ?? '';
+   // The first purpose (sale) is the default and unbadged; others, e.g. "For Rent", get a badge.
+   const purposeBadge = purpose && purpose.slug !== menu[0]?.slug ? purpose.label : null;
  
    const imageList = images && images.length > 0 ? images.slice(0, 3) : ['/placeholder.svg'];
    const isUnavailable = status === 'Sold' || status === 'Rented';
@@ -49,8 +58,10 @@
    const handleWhatsApp = (e: React.MouseEvent) => {
      e.preventDefault();
      e.stopPropagation();
-     const message = encodeURIComponent(`Hi, I'm interested in ${project_name || title} - ${formatPrice(price)}`);
-     window.open(`https://wa.me/923333978181?text=${message}`, '_blank');
+     window.open(
+       whatsappUrl(`Hi, I'm interested in ${project_name || title} - ${formatPrice(price, priceSuffix)}`),
+       '_blank'
+     );
    };
  
    return (
@@ -79,10 +90,17 @@
          {/* Gradient Overlay for Price */}
          <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent" />
  
-         {/* Top Left - Verified Badge */}
-         <div className="absolute top-4 left-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500 text-white text-xs font-medium">
-           <Check className="w-3 h-3" />
-           Verified
+         {/* Top Left - Verified Badge (+ purpose badge for rent listings) */}
+         <div className="absolute top-4 left-4 flex flex-col items-start gap-1.5">
+           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500 text-white text-xs font-medium">
+             <Check className="w-3 h-3" />
+             Verified
+           </div>
+           {purposeBadge && (
+             <div className="px-2.5 py-1 rounded-full bg-background/90 text-foreground text-xs font-medium">
+               {purposeBadge}
+             </div>
+           )}
          </div>
  
          {/* Top Right - Save Heart */}
@@ -135,6 +153,7 @@
          <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
            <p className="text-2xl md:text-3xl font-serif font-medium text-white">
              {formatPrice(price)}
+             {priceSuffix && <span className="ml-1 text-sm font-sans text-white/80">{priceSuffix}</span>}
            </p>
  
            {/* WhatsApp Quick Action - Mobile always visible, Desktop on hover */}
@@ -160,6 +179,11 @@
  
        {/* Content */}
        <div className="p-5">
+         {/* Category */}
+         {categoryLabel && (
+           <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{categoryLabel}</p>
+         )}
+ 
          {/* Title */}
          <h3 className="text-lg font-serif font-medium text-foreground truncate mb-1 group-hover:text-gold transition-colors duration-300">
            {title}
