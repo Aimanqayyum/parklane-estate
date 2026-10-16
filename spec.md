@@ -204,11 +204,13 @@ Partial indexes on `status = 'Available'` match every public query (the site onl
 create or replace function public.get_listing_menu()
 returns table (
   purpose text, nav_label text, label text, url_segment text, purpose_order smallint,
+  closed_status text, price_suffix text, price_slider_max bigint, price_slider_step bigint,
   category text, category_label text, category_label_plural text, icon text, category_order smallint,
   listing_count bigint
 )
 language sql stable security definer set search_path = public as $$
   select p.slug, p.nav_label, p.label, p.url_segment, p.sort_order,
+         p.closed_status, p.price_suffix, p.price_slider_max, p.price_slider_step,
          c.slug, c.label, c.label_plural, c.icon, pc.sort_order,
          count(pr.id)
   from public.listing_purposes   p
@@ -219,6 +221,7 @@ language sql stable security definer set search_path = public as $$
                                    and pr.status   = 'Available'
   where p.is_active
   group by p.slug, p.nav_label, p.label, p.url_segment, p.sort_order,
+           p.closed_status, p.price_suffix, p.price_slider_max, p.price_slider_step,
            c.slug, c.label, c.label_plural, c.icon, pc.sort_order
   order by p.sort_order, pc.sort_order;
 $$;
@@ -226,6 +229,8 @@ $$;
 revoke all on function public.get_listing_menu() from public;
 grant execute on function public.get_listing_menu() to anon, authenticated;
 ```
+
+The purpose-level settings (`closed_status`, `price_suffix`, `price_slider_max`, `price_slider_step`) are returned on every row so the admin form, price formatting and the price slider need no second request. (Added to this function during implementation of Phase 2: sections 6 to 9 need them and the first draft omitted them.)
 
 `security definer` is deliberate: it returns only lookup labels and aggregate counts, so anonymous visitors get counts without needing broader read access to `properties`.
 

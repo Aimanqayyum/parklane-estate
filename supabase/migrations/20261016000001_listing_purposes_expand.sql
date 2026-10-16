@@ -186,14 +186,18 @@ create index if not exists properties_purpose_price_idx
 -- security definer is deliberate: it returns only lookup labels and aggregate
 -- counts, so anonymous visitors get counts without broader access to properties.
 
-create or replace function public.get_listing_menu()
+drop function if exists public.get_listing_menu();
+
+create function public.get_listing_menu()
 returns table (
   purpose text, nav_label text, label text, url_segment text, purpose_order smallint,
+  closed_status text, price_suffix text, price_slider_max bigint, price_slider_step bigint,
   category text, category_label text, category_label_plural text, icon text, category_order smallint,
   listing_count bigint
 )
 language sql stable security definer set search_path = public as $$
   select p.slug, p.nav_label, p.label, p.url_segment, p.sort_order,
+         p.closed_status, p.price_suffix, p.price_slider_max, p.price_slider_step,
          c.slug, c.label, c.label_plural, c.icon, pc.sort_order,
          count(pr.id)
   from public.listing_purposes   p
@@ -204,6 +208,7 @@ language sql stable security definer set search_path = public as $$
                                    and pr.status   = 'Available'
   where p.is_active
   group by p.slug, p.nav_label, p.label, p.url_segment, p.sort_order,
+           p.closed_status, p.price_suffix, p.price_slider_max, p.price_slider_step,
            c.slug, c.label, c.label_plural, c.icon, pc.sort_order
   order by p.sort_order, pc.sort_order;
 $$;
