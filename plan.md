@@ -21,18 +21,18 @@ Update this list as work lands (`[x]` when done and committed). A new session re
 - [x] 3.2 Add / Edit property pages
 - [x] 3.3 Admin property list (purpose badge + filter)
 - [x] 3.4 Dashboard split (optional)
-- [ ] 4.1 Routes in `App.tsx`
-- [ ] 4.2 `PropertiesListing` purpose / category
-- [ ] 4.3 `ListingHeader` component
-- [ ] 4.4 `PropertyFilters` changes
-- [ ] 4.5 `EmptyState` changes
-- [ ] 4.6 Per-page SEO
+- [x] 4.1 Routes in `App.tsx`
+- [x] 4.2 `PropertiesListing` purpose / category
+- [x] 4.3 `ListingHeader` component
+- [x] 4.4 `PropertyFilters` changes
+- [x] 4.5 `EmptyState` changes
+- [x] 4.6 Per-page SEO
 - [ ] 5.1 `MegaMenu` (desktop)
 - [ ] 5.2 Mobile accordion
 - [ ] 5.3 `Header` integration + `lg` breakpoint
 - [ ] 6.1 `PropertyCard` / `PropertyGrid`
 - [ ] 6.2 `PropertyDetail`
-- [ ] 6.3 `FeaturedProperties`
+- [x] 6.3 `FeaturedProperties`
 - [ ] 7.1 Delete `Index.tsx` / `SupabaseTest.tsx`
 - [ ] 7.2 No `property_type` left outside migrations
 - [ ] 7.3 `CLAUDE.md` architecture notes updated

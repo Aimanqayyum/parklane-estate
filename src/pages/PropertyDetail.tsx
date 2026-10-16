@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/utils/supabase';
 import { formatPrice, formatArea } from '@/utils/formatPrice';
+import { useListingMenu } from '@/hooks/useListingMenu';
+import { allCategories } from '@/lib/listingMenu';
 import BentoGallery from '@/components/properties/BentoGallery';
 import PropertyCard from '@/components/properties/PropertyCard';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -21,7 +23,8 @@ interface Property {
   description: string | null;
   price: number;
   location: string;
-  property_type: string;
+  purpose: string;
+  category: string;
   bedrooms: number | null;
   bathrooms: number | null;
   area_sqft: number | null;
@@ -42,7 +45,8 @@ interface RelatedProperty {
   project_name: string | null;
   price: number;
   location: string;
-  property_type: string;
+  purpose: string;
+  category: string;
   bedrooms: number | null;
   bathrooms: number | null;
   area_sqft: number | null;
@@ -58,6 +62,7 @@ const PropertyDetail = () => {
   const [property, setProperty] = useState<Property | null>(null);
   const [relatedProperties, setRelatedProperties] = useState<RelatedProperty[]>([]);
   const [loading, setLoading] = useState(true);
+  const { menu } = useListingMenu();
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -92,7 +97,7 @@ const PropertyDetail = () => {
 
         const { data: related } = await supabase
           .from('properties')
-          .select('id, slug, title, project_name, price, location, property_type, bedrooms, bathrooms, area_sqft, images, status, featured')
+          .select('id, slug, title, project_name, price, location, purpose, category, bedrooms, bathrooms, area_sqft, images, status, featured')
           .eq('status', 'Available')
           .neq('id', data.id)
           .or(`location.eq.${data.location},project_name.eq.${data.project_name || 'null'}`)
@@ -166,12 +171,14 @@ const PropertyDetail = () => {
   }
 
   const isUnavailable = property.status === 'Sold' || property.status === 'Rented';
+  const categoryLabel =
+    allCategories(menu).find((cat) => cat.slug === property.category)?.label ?? property.category;
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
       <SEO
         title={property.title}
-        description={property.description?.substring(0, 150) || `${property.property_type} in ${property.location}`}
+        description={property.description?.substring(0, 150) || `${categoryLabel} in ${property.location}`}
         image={property.images?.[0] || undefined}
         type="article"
       />
@@ -229,7 +236,7 @@ const PropertyDetail = () => {
                   <Home size={20} strokeWidth={1.5} className="text-muted-foreground" />
                   <div>
                     <p className="text-xs uppercase tracking-wider text-muted-foreground">Type</p>
-                    <p className="font-medium text-foreground">{property.property_type}</p>
+                    <p className="font-medium text-foreground">{categoryLabel}</p>
                   </div>
                 </div>
                 {property.bedrooms && (

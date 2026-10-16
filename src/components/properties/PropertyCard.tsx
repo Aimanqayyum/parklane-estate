@@ -3,25 +3,10 @@
  import { Bed, Bath, Maximize, Heart, Check, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
  import { formatPrice, formatArea } from '@/utils/formatPrice';
  import { cn } from '@/lib/utils';
- 
- interface Property {
-   id: string;
-   slug: string;
-   title: string;
-   project_name: string | null;
-   price: number;
-   location: string;
-   property_type: string;
-   bedrooms: number | null;
-   bathrooms: number | null;
-   area_sqft: number | null;
-   images: string[] | null;
-   status: string;
-   featured: boolean;
- }
+ import type { PropertyListItem } from '@/types/property';
  
  interface PropertyCardProps {
-   property: Property;
+   property: PropertyListItem;
  }
  
  const PropertyCard = ({ property }: PropertyCardProps) => {

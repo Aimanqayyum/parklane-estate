@@ -14,7 +14,8 @@ import StaggerReveal from '@/components/common/StaggerReveal';
    project_name: string | null;
    price: number;
    location: string;
-   property_type: string;
+   purpose: string;
+   category: string;
    bedrooms: number | null;
    bathrooms: number | null;
    area_sqft: number | null;
@@ -34,7 +35,7 @@ import StaggerReveal from '@/components/common/StaggerReveal';
          setLoading(true);
          const { data, error: fetchError } = await supabase
            .from('properties')
-           .select('id, slug, title, project_name, price, location, property_type, bedrooms, bathrooms, area_sqft, images, status, featured')
+           .select('id, slug, title, project_name, price, location, purpose, category, bedrooms, bathrooms, area_sqft, images, status, featured')
            .eq('status', 'Available')
            .eq('featured', true)
            .limit(6);

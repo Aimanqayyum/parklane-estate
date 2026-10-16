@@ -40,6 +40,9 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/services" element={<Services />} />
             <Route path="/faq" element={<FAQ />} />
+            {/* Buy / Rent pages. Static routes above rank higher than these params. */}
+            <Route path="/:purposeSegment" element={<PropertiesListing />} />
+            <Route path="/:purposeSegment/:categorySlug" element={<PropertiesListing />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           </Route>
           
