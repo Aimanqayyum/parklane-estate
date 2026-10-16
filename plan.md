@@ -17,10 +17,10 @@ Update this list as work lands (`[x]` when done and committed). A new session re
 - [x] 2.2 `listingMenu` helpers + tests
 - [x] 2.3 `useListingMenu` hook
 - [x] 2.4 `formatPrice` suffix + test
-- [ ] 3.1 `PropertyForm` (purpose, category, status)
-- [ ] 3.2 Add / Edit property pages
-- [ ] 3.3 Admin property list (purpose badge + filter)
-- [ ] 3.4 Dashboard split (optional)
+- [x] 3.1 `PropertyForm` (purpose, category, status)
+- [x] 3.2 Add / Edit property pages
+- [x] 3.3 Admin property list (purpose badge + filter)
+- [x] 3.4 Dashboard split (optional)
 - [ ] 4.1 Routes in `App.tsx`
 - [ ] 4.2 `PropertiesListing` purpose / category
 - [ ] 4.3 `ListingHeader` component
