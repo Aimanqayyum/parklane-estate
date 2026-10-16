@@ -114,3 +114,49 @@ export function changePurpose(
     : 'Available';
   return { category, status, clearedCategory: allowed ? '' : current.category };
 }
+
+/** "Flats For Rent", "Properties For Sale", or "Properties" on /properties. */
+export function listingHeading(purpose: MenuPurpose | null, category: MenuCategory | null): string {
+  if (purpose && category) return `${category.labelPlural} ${purpose.label}`;
+  if (purpose) return `Properties ${purpose.label}`;
+  return 'Properties';
+}
+
+/** Title, description and canonical path for a listing page. */
+export function listingSeo(
+  purpose: MenuPurpose | null,
+  category: MenuCategory | null,
+): { title: string; description: string; path: string } {
+  if (!purpose) {
+    return {
+      title: 'Properties for Sale & Rent',
+      description:
+        "Browse luxury apartments, bungalows, offices, and plots for sale and rent in Karachi's premium locations - DHA, Clifton, and more.",
+      path: '/properties',
+    };
+  }
+  const what = category ? category.labelPlural : 'Properties';
+  const forWhat = purpose.label.toLowerCase();
+  return {
+    title: `${what} ${purpose.label.replace(/^For/, 'for')} in Karachi`,
+    description: `Browse ${what.toLowerCase()} ${forWhat} in Karachi's premium locations - DHA, Clifton and more. See photos, prices and details, or contact Park Lane Estate.`,
+    path: buildListingPath(purpose.urlSegment, category?.slug),
+  };
+}
+
+/** Where the Buy | Rent toggle goes: same category if the target has it, else the purpose page. */
+export function togglePurposePath(target: MenuPurpose, categorySlug: string | null): string {
+  const keep = categorySlug && target.categories.some((c) => c.slug === categorySlug);
+  return buildListingPath(target.urlSegment, keep ? categorySlug : undefined);
+}
+
+/** Every category once (first-seen order across purposes), for filters that span purposes. */
+export function allCategories(menu: ListingMenu): MenuCategory[] {
+  const seen = new Map<string, MenuCategory>();
+  for (const purpose of menu) {
+    for (const category of purpose.categories) {
+      if (!seen.has(category.slug)) seen.set(category.slug, category);
+    }
+  }
+  return [...seen.values()];
+}

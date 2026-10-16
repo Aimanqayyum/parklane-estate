@@ -6,6 +6,10 @@ import {
   buildListingPath,
   statusOptionsFor,
   changePurpose,
+  listingHeading,
+  listingSeo,
+  togglePurposePath,
+  allCategories,
 } from './listingMenu';
 import type { MenuRow } from '@/types/property';
 
@@ -197,5 +201,62 @@ describe('changePurpose', () => {
 
   it('does not report a cleared category when none was chosen', () => {
     expect(changePurpose(menu, { category: '', status: 'Available' }, 'rent').clearedCategory).toBe('');
+  });
+});
+
+describe('listing page text', () => {
+  const menu = groupMenu(rows);
+  const sale = menu[0];
+  const rent = menu[1];
+  const flat = rent.categories[0];
+
+  it('headings follow purpose and category', () => {
+    expect(listingHeading(null, null)).toBe('Properties');
+    expect(listingHeading(sale, null)).toBe('Properties For Sale');
+    expect(listingHeading(rent, flat)).toBe('Flats For Rent');
+  });
+
+  it('SEO text is specific to each combination', () => {
+    expect(listingSeo(rent, flat)).toMatchObject({
+      title: 'Flats for Rent in Karachi',
+      path: '/rent/flat',
+    });
+    expect(listingSeo(sale, null)).toMatchObject({
+      title: 'Properties for Sale in Karachi',
+      path: '/buy',
+    });
+    expect(listingSeo(null, null)).toMatchObject({
+      title: 'Properties for Sale & Rent',
+      path: '/properties',
+    });
+    expect(listingSeo(rent, flat).description).toContain('flats for rent');
+  });
+});
+
+describe('togglePurposePath', () => {
+  const menu = groupMenu(rows);
+  const [sale, rent] = menu;
+
+  it('keeps the category when the other purpose has it', () => {
+    expect(togglePurposePath(rent, 'flat')).toBe('/rent/flat');
+  });
+
+  it('falls back to the purpose page when it does not (plot under rent)', () => {
+    expect(togglePurposePath(rent, 'plot')).toBe('/rent');
+  });
+
+  it('goes to the purpose page when there is no category', () => {
+    expect(togglePurposePath(sale, null)).toBe('/buy');
+  });
+});
+
+describe('allCategories', () => {
+  it('lists each category once, in first-seen menu order', () => {
+    const menu = groupMenu(rows);
+    expect(allCategories(menu).map((c) => c.slug)).toEqual(['bungalow', 'flat', 'plot', 'shop']);
+  });
+
+  it('is empty for an empty menu', () => {
+    expect(allCategories([])).toEqual([]);
   });
 });
