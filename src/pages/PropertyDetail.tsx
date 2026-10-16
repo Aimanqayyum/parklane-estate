@@ -7,7 +7,8 @@ import {
 import { supabase } from '@/utils/supabase';
 import { formatPrice, formatArea } from '@/utils/formatPrice';
 import { useListingMenu } from '@/hooks/useListingMenu';
-import { allCategories } from '@/lib/listingMenu';
+import { buildListingPath } from '@/lib/listingMenu';
+import { pickRelated } from '@/lib/related';
 import BentoGallery from '@/components/properties/BentoGallery';
 import PropertyCard from '@/components/properties/PropertyCard';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -99,11 +100,13 @@ const PropertyDetail = () => {
           .from('properties')
           .select('id, slug, title, project_name, price, location, purpose, category, bedrooms, bathrooms, area_sqft, images, status, featured')
           .eq('status', 'Available')
+          .eq('purpose', data.purpose)
           .neq('id', data.id)
           .or(`location.eq.${data.location},project_name.eq.${data.project_name || 'null'}`)
-          .limit(4);
+          .limit(12);
 
-        setRelatedProperties((related as RelatedProperty[]) || []);
+        // Same purpose only, same category first.
+        setRelatedProperties(pickRelated(data, (related as RelatedProperty[]) || [], 4));
       } catch (err) {
         console.error('Error fetching property:', err);
         setError(err instanceof Error ? err.message : 'Failed to load property');
@@ -171,14 +174,20 @@ const PropertyDetail = () => {
   }
 
   const isUnavailable = property.status === 'Sold' || property.status === 'Rented';
-  const categoryLabel =
-    allCategories(menu).find((cat) => cat.slug === property.category)?.label ?? property.category;
+  const purpose = menu.find((p) => p.slug === property.purpose);
+  const category = purpose?.categories.find((c) => c.slug === property.category);
+  const categoryLabel = category?.label ?? property.category;
+  const priceSuffix = purpose?.priceSuffix ?? '';
+  const priceText = formatPrice(property.price, priceSuffix);
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
       <SEO
         title={property.title}
-        description={property.description?.substring(0, 150) || `${categoryLabel} in ${property.location}`}
+        description={
+          property.description?.substring(0, 150) ||
+          `${categoryLabel}${purpose ? ` ${purpose.label.toLowerCase()}` : ''} in ${property.location}`
+        }
         image={property.images?.[0] || undefined}
         type="article"
       />
@@ -189,7 +198,29 @@ const PropertyDetail = () => {
           <nav className="flex items-center gap-2 text-sm text-muted-foreground">
             <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
             <ChevronRight size={14} />
-            <Link to="/properties" className="hover:text-foreground transition-colors">Properties</Link>
+            {purpose ? (
+              <>
+                <Link
+                  to={buildListingPath(purpose.urlSegment)}
+                  className="hover:text-foreground transition-colors"
+                >
+                  {purpose.navLabel}
+                </Link>
+                {category && (
+                  <>
+                    <ChevronRight size={14} />
+                    <Link
+                      to={buildListingPath(purpose.urlSegment, category.slug)}
+                      className="hover:text-foreground transition-colors"
+                    >
+                      {category.labelPlural}
+                    </Link>
+                  </>
+                )}
+              </>
+            ) : (
+              <Link to="/properties" className="hover:text-foreground transition-colors">Properties</Link>
+            )}
             <ChevronRight size={14} />
             <span className="text-foreground truncate max-w-[200px]">{property.title}</span>
           </nav>
@@ -220,7 +251,7 @@ const PropertyDetail = () => {
                   {property.title}
                 </h1>
                 <p className="text-4xl font-serif font-medium text-foreground">
-                  {formatPrice(property.price)}
+                  {priceText}
                 </p>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <MapPin size={18} strokeWidth={1.5} />
@@ -360,7 +391,7 @@ const PropertyDetail = () => {
                   )}
 
                   <p className="text-4xl font-serif font-medium text-foreground mb-4">
-                    {formatPrice(property.price)}
+                    {priceText}
                   </p>
 
                   <div className="flex items-center gap-2 text-muted-foreground mb-6">

@@ -30,8 +30,8 @@ Update this list as work lands (`[x]` when done and committed). A new session re
 - [x] 5.1 `MegaMenu` (desktop)
 - [x] 5.2 Mobile accordion
 - [x] 5.3 `Header` integration + `lg` breakpoint
-- [ ] 6.1 `PropertyCard` / `PropertyGrid`
-- [ ] 6.2 `PropertyDetail`
+- [x] 6.1 `PropertyCard` / `PropertyGrid`
+- [x] 6.2 `PropertyDetail`
 - [x] 6.3 `FeaturedProperties`
 - [ ] 7.1 Delete `Index.tsx` / `SupabaseTest.tsx`
 - [ ] 7.2 No `property_type` left outside migrations
