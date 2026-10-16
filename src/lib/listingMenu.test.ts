@@ -4,6 +4,8 @@ import {
   categoriesFor,
   resolveRoute,
   buildListingPath,
+  statusOptionsFor,
+  changePurpose,
 } from './listingMenu';
 import type { MenuRow } from '@/types/property';
 
@@ -153,5 +155,47 @@ describe('buildListingPath', () => {
 
   it('treats an empty category as none', () => {
     expect(buildListingPath('rent', '')).toBe('/rent');
+  });
+});
+
+describe('statusOptionsFor', () => {
+  const menu = groupMenu(rows);
+
+  it('is Available plus the closed status of the purpose', () => {
+    expect(statusOptionsFor(menu, 'sale')).toEqual(['Available', 'Sold']);
+    expect(statusOptionsFor(menu, 'rent')).toEqual(['Available', 'Rented']);
+  });
+
+  it('is just Available when no purpose is chosen yet', () => {
+    expect(statusOptionsFor(menu, '')).toEqual(['Available']);
+    expect(statusOptionsFor(menu, 'lease')).toEqual(['Available']);
+  });
+});
+
+describe('changePurpose', () => {
+  const menu = groupMenu(rows);
+
+  it('keeps a category and status that are still valid', () => {
+    expect(changePurpose(menu, { category: 'flat', status: 'Available' }, 'rent')).toEqual({
+      category: 'flat', status: 'Available', clearedCategory: '',
+    });
+  });
+
+  it('clears a category the new purpose does not allow, and reports it', () => {
+    expect(changePurpose(menu, { category: 'plot', status: 'Available' }, 'rent')).toEqual({
+      category: '', status: 'Available', clearedCategory: 'plot',
+    });
+  });
+
+  it('resets a status that does not fit the new purpose to Available', () => {
+    expect(changePurpose(menu, { category: 'flat', status: 'Sold' }, 'rent').status).toBe('Available');
+  });
+
+  it('keeps the closed status when it fits the new purpose', () => {
+    expect(changePurpose(menu, { category: 'flat', status: 'Rented' }, 'rent').status).toBe('Rented');
+  });
+
+  it('does not report a cleared category when none was chosen', () => {
+    expect(changePurpose(menu, { category: '', status: 'Available' }, 'rent').clearedCategory).toBe('');
   });
 });

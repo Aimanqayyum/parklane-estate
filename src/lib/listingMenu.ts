@@ -89,3 +89,28 @@ export function resolveRoute(
 export function buildListingPath(urlSegment: string, categorySlug?: string): string {
   return categorySlug ? `/${urlSegment}/${categorySlug}` : `/${urlSegment}`;
 }
+
+/** Status choices for a purpose: Available, plus that purpose's closed status. */
+export function statusOptionsFor(menu: ListingMenu, purposeSlug: string): string[] {
+  const purpose = menu.find((p) => p.slug === purposeSlug);
+  return purpose ? ['Available', purpose.closedStatus] : ['Available'];
+}
+
+/**
+ * What the admin form should hold after the purpose changes: the category is
+ * cleared if the new purpose does not allow it (`clearedCategory` names the
+ * one that was dropped, '' if none), and a status that no longer fits goes
+ * back to Available.
+ */
+export function changePurpose(
+  menu: ListingMenu,
+  current: { category: string; status: string },
+  newPurposeSlug: string,
+): { category: string; status: string; clearedCategory: string } {
+  const allowed = categoriesFor(menu, newPurposeSlug).some((c) => c.slug === current.category);
+  const category = allowed ? current.category : '';
+  const status = statusOptionsFor(menu, newPurposeSlug).includes(current.status)
+    ? current.status
+    : 'Available';
+  return { category, status, clearedCategory: allowed ? '' : current.category };
+}
