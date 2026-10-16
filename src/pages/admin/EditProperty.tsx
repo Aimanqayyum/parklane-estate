@@ -23,7 +23,8 @@
    description: string;
    price: number;
    location: string;
-   property_type: string;
+   purpose: string;
+   category: string;
    bedrooms: number | null;
    bathrooms: number | null;
    area_sqft: number | null;
@@ -154,7 +155,8 @@
            description: formData.description.trim(),
            price: parseFloat(formData.price),
            location: formData.location,
-           property_type: formData.propertyType,
+           purpose: formData.purpose,
+           category: formData.category,
            bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
            bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
            area_sqft: formData.areaSqft ? parseInt(formData.areaSqft) : null,
@@ -177,9 +179,13 @@
        navigate('/admin/properties');
      } catch (error) {
        console.error('Error updating property:', error);
+       // The database may reject a combination (constraint / trigger); show why.
+       const reason = (error as { message?: string } | null)?.message;
        toast({
          title: 'Error',
-         description: 'Failed to update property. Please try again.',
+         description: reason
+           ? `Failed to update property: ${reason}`
+           : 'Failed to update property. Please try again.',
          variant: 'destructive',
        });
      } finally {
@@ -216,7 +222,8 @@
      description: property.description,
      price: property.price.toString(),
      location: property.location,
-     propertyType: property.property_type,
+     purpose: property.purpose,
+     category: property.category,
      bedrooms: property.bedrooms?.toString() || '',
      bathrooms: property.bathrooms?.toString() || '',
      areaSqft: property.area_sqft?.toString() || '',
