@@ -13,10 +13,10 @@ Update this list as work lands (`[x]` when done and committed). A new session re
 - [x] 1.3 Migration 3 (contract) written
 - [x] 1.4 `supabase/verify.sql` written
 - [x] 1.5 `supabase/README.md` written
-- [ ] 2.1 Shared types
-- [ ] 2.2 `listingMenu` helpers + tests
-- [ ] 2.3 `useListingMenu` hook
-- [ ] 2.4 `formatPrice` suffix + test
+- [x] 2.1 Shared types
+- [x] 2.2 `listingMenu` helpers + tests
+- [x] 2.3 `useListingMenu` hook
+- [x] 2.4 `formatPrice` suffix + test
 - [ ] 3.1 `PropertyForm` (purpose, category, status)
 - [ ] 3.2 Add / Edit property pages
 - [ ] 3.3 Admin property list (purpose badge + filter)
