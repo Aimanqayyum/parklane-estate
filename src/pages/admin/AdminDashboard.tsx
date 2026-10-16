@@ -14,12 +14,14 @@
  import { Building2, CheckCircle, Star, Eye, Plus, ExternalLink, Pencil } from 'lucide-react';
  import LoadingSpinner from '@/components/common/LoadingSpinner';
  import { formatPrice } from '@/utils/formatPrice';
+ import { useListingMenu } from '@/hooks/useListingMenu';
  
  interface RecentProperty {
    slug: string;
    title: string;
    price: number;
    location: string;
+   purpose: string | null;
    created_at: string;
  }
  
@@ -39,6 +41,7 @@
    });
    const [recentProperties, setRecentProperties] = useState<RecentProperty[]>([]);
    const [isLoading, setIsLoading] = useState(true);
+   const { menu } = useListingMenu();
  
    useEffect(() => {
      const fetchDashboardData = async () => {
@@ -50,7 +53,7 @@
              supabase.from('properties').select('*', { count: 'exact', head: true }).eq('status', 'Available'),
              supabase.from('properties').select('*', { count: 'exact', head: true }).eq('featured', true),
              supabase.from('properties').select('view_count'),
-             supabase.from('properties').select('slug, title, price, location, created_at').order('created_at', { ascending: false }).limit(5),
+             supabase.from('properties').select('slug, title, price, location, purpose, created_at').order('created_at', { ascending: false }).limit(5),
            ]);
  
          const totalViews = viewsResult.data?.reduce((sum, p) => sum + (p.view_count || 0), 0) || 0;
@@ -81,9 +84,12 @@
      );
    }
  
-   const metricCards = [
+   // e.g. "12 for sale · 3 for rent", from the live menu counts
+   const availableSplit = menu.map((p) => `${p.totalCount} ${p.label.toLowerCase()}`).join(' · ');
+ 
+   const metricCards: { title: string; value: number; icon: typeof Building2; color: string; detail?: string }[] = [
      { title: 'Total Properties', value: metrics.totalProperties, icon: Building2, color: 'text-blue-600' },
-     { title: 'Available', value: metrics.availableProperties, icon: CheckCircle, color: 'text-green-600' },
+     { title: 'Available', value: metrics.availableProperties, icon: CheckCircle, color: 'text-green-600', detail: availableSplit },
      { title: 'Featured', value: metrics.featuredProperties, icon: Star, color: 'text-yellow-600' },
      { title: 'Total Views', value: metrics.totalViews, icon: Eye, color: 'text-purple-600' },
    ];
@@ -113,6 +119,7 @@
                  <div>
                    <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
                    <p className="text-3xl font-bold text-foreground">{card.value}</p>
+                   {card.detail && <p className="text-xs text-muted-foreground">{card.detail}</p>}
                  </div>
                  <div className={`p-3 rounded-full bg-muted ${card.color}`}>
                    <card.icon className="h-6 w-6" />
@@ -159,7 +166,12 @@
                    {recentProperties.map((property) => (
                      <TableRow key={property.slug}>
                        <TableCell className="font-medium">{property.title}</TableCell>
-                       <TableCell>{formatPrice(property.price)}</TableCell>
+                       <TableCell>
+                         {formatPrice(
+                           property.price,
+                           menu.find((p) => p.slug === property.purpose)?.priceSuffix
+                         )}
+                       </TableCell>
                        <TableCell>{property.location}</TableCell>
                        <TableCell>
                          {new Date(property.created_at).toLocaleDateString()}

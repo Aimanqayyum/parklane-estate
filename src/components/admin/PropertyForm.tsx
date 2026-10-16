@@ -15,6 +15,8 @@
  } from '@/components/ui/select';
  import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
  import { Loader2, Upload, X, GripVertical, AlertCircle } from 'lucide-react';
+ import { useListingMenu } from '@/hooks/useListingMenu';
+ import { categoriesFor, changePurpose, statusOptionsFor } from '@/lib/listingMenu';
  
  export interface PropertyFormData {
    title: string;
@@ -22,7 +24,8 @@
    description: string;
    price: string;
    location: string;
-   propertyType: string;
+   purpose: string;
+   category: string;
    bedrooms: string;
    bathrooms: string;
    areaSqft: string;
@@ -60,12 +63,10 @@
    'Saddar',
  ];
  
- const PROPERTY_TYPES = ['Apartment', 'Bungalow', 'Office', 'Shop', 'Plot'];
- const STATUS_OPTIONS = ['Available', 'Sold', 'Rented'];
- 
  const PropertyForm = ({ mode, initialData, onSubmit, isSubmitting = false }: PropertyFormProps) => {
    const navigate = useNavigate();
    const fileInputRef = useRef<HTMLInputElement>(null);
+   const { menu, isLoading: menuLoading, isError: menuError } = useListingMenu();
  
    const [formData, setFormData] = useState<PropertyFormData>({
      title: '',
@@ -73,7 +74,8 @@
      description: '',
      price: '',
      location: '',
-     propertyType: '',
+     purpose: '',
+     category: '',
      bedrooms: '',
      bathrooms: '',
      areaSqft: '',
@@ -87,6 +89,14 @@
    const [images, setImages] = useState<ExistingImage[]>([]);
    const [errors, setErrors] = useState<Record<string, string>>({});
    const [touched, setTouched] = useState<Record<string, boolean>>({});
+   const [categoryNotice, setCategoryNotice] = useState('');
+ 
+   const selectedPurpose = menu.find((p) => p.slug === formData.purpose);
+   const categoryOptions = categoriesFor(menu, formData.purpose);
+   const statusOptions = statusOptionsFor(menu, formData.purpose);
+   const priceLabel = selectedPurpose?.priceSuffix
+     ? `Price (PKR ${selectedPurpose.priceSuffix}) *`
+     : 'Price (PKR) *';
  
    useEffect(() => {
      if (initialData) {
@@ -96,7 +106,8 @@
          description: initialData.description || '',
          price: initialData.price || '',
          location: initialData.location || '',
-         propertyType: initialData.propertyType || '',
+         purpose: initialData.purpose || '',
+         category: initialData.category || '',
          bedrooms: initialData.bedrooms || '',
          bathrooms: initialData.bathrooms || '',
          areaSqft: initialData.areaSqft || '',
@@ -130,11 +141,15 @@
        case 'location':
          if (!value) return 'Location is required';
          return undefined;
-       case 'propertyType':
+       case 'purpose':
+         if (!value) return 'Please choose what the property is listed for';
+         return undefined;
+       case 'category':
          if (!value) return 'Property type is required';
          return undefined;
        case 'status':
          if (!value) return 'Status is required';
+         if (!statusOptions.includes(value)) return 'Status does not fit this listing type';
          return undefined;
        case 'videoUrl':
          if (value && !value.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|vimeo\.com)/)) {
@@ -154,9 +169,25 @@
  
    const handleChange = (name: string, value: string | boolean) => {
      setFormData((prev) => ({ ...prev, [name]: value }));
+     if (name === 'category') setCategoryNotice('');
      if (touched[name] && typeof value === 'string') {
        const error = validateField(name, value);
        setErrors((prev) => ({ ...prev, [name]: error || '' }));
+     }
+   };
+ 
+   const handlePurposeChange = (purposeSlug: string) => {
+     const next = changePurpose(menu, formData, purposeSlug);
+     setFormData((prev) => ({ ...prev, purpose: purposeSlug, category: next.category, status: next.status }));
+     setErrors((prev) => ({ ...prev, purpose: '', category: '', status: '' }));
+     if (next.clearedCategory) {
+       const label =
+         categoriesFor(menu, formData.purpose).find((c) => c.slug === next.clearedCategory)?.label ??
+         next.clearedCategory;
+       const purposeLabel = menu.find((p) => p.slug === purposeSlug)?.navLabel ?? purposeSlug;
+       setCategoryNotice(`${label} is not available for ${purposeLabel}. Please choose another type.`);
+     } else {
+       setCategoryNotice('');
      }
    };
  
@@ -204,7 +235,7 @@
  
    const validateForm = (): boolean => {
      const newErrors: Record<string, string> = {};
-     const requiredFields = ['title', 'description', 'price', 'location', 'propertyType', 'status'];
+     const requiredFields = ['title', 'description', 'price', 'location', 'purpose', 'category', 'status'];
  
      requiredFields.forEach((field) => {
        const error = validateField(field, formData[field as keyof PropertyFormData] as string);
@@ -227,6 +258,7 @@
    const handleSubmit = async (e: React.FormEvent) => {
      e.preventDefault();
  
+     if (menuError || menuLoading) return;
      if (!validateForm()) return;
  
      await onSubmit(formData, images);
@@ -287,9 +319,61 @@
            <CardTitle>Property Details</CardTitle>
          </CardHeader>
          <CardContent className="space-y-4">
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+           {menuError && (
+             <div className="flex items-center gap-2 text-sm text-destructive">
+               <AlertCircle className="h-4 w-4" />
+               Could not load listing types. Reload the page to try again.
+             </div>
+           )}
+ 
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div className="space-y-2">
-               <Label htmlFor="price">Price (PKR) *</Label>
+               <Label htmlFor="purpose">Listed for *</Label>
+               <Select
+                 value={formData.purpose}
+                 onValueChange={handlePurposeChange}
+                 disabled={menuLoading || menuError}
+               >
+                 <SelectTrigger id="purpose" className={errors.purpose ? 'border-destructive' : ''}>
+                   <SelectValue placeholder={menuLoading ? 'Loading...' : 'Select sale or rent'} />
+                 </SelectTrigger>
+                 <SelectContent>
+                   {menu.map((purpose) => (
+                     <SelectItem key={purpose.slug} value={purpose.slug}>
+                       {purpose.label}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
+               {errors.purpose && <p className="text-sm text-destructive">{errors.purpose}</p>}
+             </div>
+ 
+             <div className="space-y-2">
+               <Label htmlFor="category">Property Type *</Label>
+               <Select
+                 value={formData.category}
+                 onValueChange={(value) => handleChange('category', value)}
+                 disabled={!formData.purpose}
+               >
+                 <SelectTrigger id="category" className={errors.category ? 'border-destructive' : ''}>
+                   <SelectValue placeholder={formData.purpose ? 'Select type' : 'Choose "Listed for" first'} />
+                 </SelectTrigger>
+                 <SelectContent>
+                   {categoryOptions.map((category) => (
+                     <SelectItem key={category.slug} value={category.slug}>
+                       {category.label}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
+               {categoryNotice && <p className="text-sm text-amber-600">{categoryNotice}</p>}
+               {errors.category && <p className="text-sm text-destructive">{errors.category}</p>}
+             </div>
+           </div>
+ 
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="space-y-2">
+               <Label htmlFor="price">{priceLabel}</Label>
                <Input
                  id="price"
                  type="number"
@@ -321,29 +405,9 @@
                </Select>
                {errors.location && <p className="text-sm text-destructive">{errors.location}</p>}
              </div>
- 
-             <div className="space-y-2">
-               <Label htmlFor="propertyType">Property Type *</Label>
-               <Select
-                 value={formData.propertyType}
-                 onValueChange={(value) => handleChange('propertyType', value)}
-               >
-                 <SelectTrigger className={errors.propertyType ? 'border-destructive' : ''}>
-                   <SelectValue placeholder="Select type" />
-                 </SelectTrigger>
-                 <SelectContent>
-                   {PROPERTY_TYPES.map((type) => (
-                     <SelectItem key={type} value={type}>
-                       {type}
-                     </SelectItem>
-                   ))}
-                 </SelectContent>
-               </Select>
-               {errors.propertyType && <p className="text-sm text-destructive">{errors.propertyType}</p>}
-             </div>
            </div>
  
-           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
              <div className="space-y-2">
                <Label htmlFor="bedrooms">Bedrooms</Label>
                <Input
@@ -387,11 +451,11 @@
                  value={formData.status}
                  onValueChange={(value) => handleChange('status', value)}
                >
-                 <SelectTrigger>
+                 <SelectTrigger className={errors.status ? 'border-destructive' : ''}>
                    <SelectValue placeholder="Select status" />
                  </SelectTrigger>
                  <SelectContent>
-                   {STATUS_OPTIONS.map((status) => (
+                   {statusOptions.map((status) => (
                      <SelectItem key={status} value={status}>
                        {status}
                      </SelectItem>

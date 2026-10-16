@@ -4,6 +4,8 @@
  import { supabase } from '@/utils/supabase';
  import { Slider } from '@/components/ui/slider';
  import { Button } from '@/components/ui/button';
+ import { allCategories } from '@/lib/listingMenu';
+ import type { ListingMenu } from '@/types/property';
  
  export interface PropertyFiltersState {
    locations: string[];
@@ -19,6 +21,13 @@
    onFilterChange: (filters: PropertyFiltersState) => void;
    isOpen: boolean;
    onClose: () => void;
+   /** Source of the property type buttons (category slugs). */
+   menu: ListingMenu;
+   /** False on Buy / Rent pages, where the category chips replace the type buttons. */
+   showTypeFilter: boolean;
+   /** Price slider range, from the purpose. */
+   priceMax: number;
+   priceStep: number;
  }
  
  const locationOptions = [
@@ -34,13 +43,9 @@
    'Saddar',
  ];
  
- const propertyTypeOptions = ['All', 'Apartment', 'Bungalow', 'Office', 'Shop', 'Plot'];
  const bedroomOptions = ['Any', '1', '2', '3', '4', '5+'];
  
- // Price range in Crore (10 million PKR)
  const PRICE_MIN = 0;
- const PRICE_MAX = 500000000; // 50 Crore
- const PRICE_STEP = 10000000; // 1 Crore
  
  const formatPriceLabel = (value: number) => {
    if (value >= 10000000) {
@@ -49,19 +54,33 @@
    if (value >= 100000) {
      return `${(value / 100000).toFixed(0)} Lac`;
    }
+   if (value >= 1000) {
+     return `${(value / 1000).toFixed(0)}k`;
+   }
    return '0';
  };
  
- const PropertyFilters = ({ filters, onFilterChange, isOpen, onClose }: PropertyFiltersProps) => {
+ const PropertyFilters = ({
+   filters,
+   onFilterChange,
+   isOpen,
+   onClose,
+   menu,
+   showTypeFilter,
+   priceMax: PRICE_MAX,
+   priceStep: PRICE_STEP,
+ }: PropertyFiltersProps) => {
    const [projects, setProjects] = useState<string[]>([]);
    const [projectSearch, setProjectSearch] = useState('');
    const [showProjectDropdown, setShowProjectDropdown] = useState(false);
  
    // Price slider state
+   // Values from the URL may come from another purpose's range, so clamp.
    const priceRange = [
-     filters.priceMin ? parseInt(filters.priceMin) : PRICE_MIN,
-     filters.priceMax ? parseInt(filters.priceMax) : PRICE_MAX,
+     filters.priceMin ? Math.min(parseInt(filters.priceMin), PRICE_MAX) : PRICE_MIN,
+     filters.priceMax ? Math.min(parseInt(filters.priceMax), PRICE_MAX) : PRICE_MAX,
    ];
+   const typeOptions = [{ slug: 'All', label: 'All' }, ...allCategories(menu)];
  
    // Fetch projects from database
    useEffect(() => {
@@ -120,26 +139,28 @@
  
    const FilterContent = () => (
      <div className="space-y-8">
-       {/* Property Type Pills */}
-       <div>
-         <h4 className="text-sm font-medium text-foreground mb-3">Property Type</h4>
-         <div className="flex flex-wrap gap-2">
-           {propertyTypeOptions.map((type) => (
-             <button
-               key={type}
-               onClick={() => onFilterChange({ ...filters, propertyType: type })}
-               className={cn(
-                 "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
-                 filters.propertyType === type
-                   ? "bg-primary text-primary-foreground"
-                   : "bg-muted text-muted-foreground hover:bg-muted/80"
-               )}
-             >
-               {type}
-             </button>
-           ))}
+       {/* Property Type Pills (category slugs from the menu) */}
+       {showTypeFilter && (
+         <div>
+           <h4 className="text-sm font-medium text-foreground mb-3">Property Type</h4>
+           <div className="flex flex-wrap gap-2">
+             {typeOptions.map((type) => (
+               <button
+                 key={type.slug}
+                 onClick={() => onFilterChange({ ...filters, propertyType: type.slug })}
+                 className={cn(
+                   "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
+                   filters.propertyType === type.slug
+                     ? "bg-primary text-primary-foreground"
+                     : "bg-muted text-muted-foreground hover:bg-muted/80"
+                 )}
+               >
+                 {type.label}
+               </button>
+             ))}
+           </div>
          </div>
-       </div>
+       )}
  
        {/* Price Range Slider */}
        <div>
@@ -159,7 +180,7 @@
          />
          <div className="flex justify-between text-xs text-muted-foreground mt-1">
            <span>0</span>
-           <span>50 Cr</span>
+           <span>{formatPriceLabel(PRICE_MAX)}</span>
          </div>
        </div>
  

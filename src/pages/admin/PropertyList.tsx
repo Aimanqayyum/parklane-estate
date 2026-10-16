@@ -37,6 +37,7 @@
  import Pagination from '@/components/common/Pagination';
  import { formatPrice } from '@/utils/formatPrice';
  import { toast } from '@/hooks/use-toast';
+ import { useListingMenu } from '@/hooks/useListingMenu';
  
  interface Property {
    id: string;
@@ -45,6 +46,7 @@
    project_name: string | null;
    price: number;
    location: string;
+   purpose: string | null;
    status: string;
    featured: boolean;
    images: string[];
@@ -58,6 +60,8 @@
    const [isLoading, setIsLoading] = useState(true);
    const [searchQuery, setSearchQuery] = useState('');
    const [statusFilter, setStatusFilter] = useState('all');
+   const [purposeFilter, setPurposeFilter] = useState('all');
+   const { menu } = useListingMenu();
    const [currentPage, setCurrentPage] = useState(1);
   const [_deletingId, setDeletingId] = useState<string | null>(null);
  
@@ -65,7 +69,7 @@
      try {
        const { data, error } = await supabase
          .from('properties')
-         .select('id, slug, title, project_name, price, location, status, featured, images, created_at')
+         .select('id, slug, title, project_name, price, location, purpose, status, featured, images, created_at')
          .order('created_at', { ascending: false });
  
        if (error) throw error;
@@ -105,8 +109,13 @@
        result = result.filter((p) => p.status === statusFilter);
      }
  
+     // Filter by purpose (sale / rent)
+     if (purposeFilter !== 'all') {
+       result = result.filter((p) => p.purpose === purposeFilter);
+     }
+ 
      return result;
-   }, [properties, searchQuery, statusFilter]);
+   }, [properties, searchQuery, statusFilter, purposeFilter]);
  
    const totalPages = Math.ceil(filteredProperties.length / ITEMS_PER_PAGE);
    const paginatedProperties = filteredProperties.slice(
@@ -182,6 +191,12 @@
      }
    };
  
+   const getPurposeBadge = (purposeSlug: string | null) => {
+     if (!purposeSlug) return <span className="text-muted-foreground">-</span>;
+     const purpose = menu.find((p) => p.slug === purposeSlug);
+     return <Badge variant="outline">{purpose?.label ?? purposeSlug}</Badge>;
+   };
+ 
    const getStatusBadge = (status: string) => {
      switch (status) {
        case 'Available':
@@ -254,6 +269,25 @@
                  <SelectItem value="Rented">Rented</SelectItem>
                </SelectContent>
              </Select>
+             <Select
+               value={purposeFilter}
+               onValueChange={(value) => {
+                 setPurposeFilter(value);
+                 setCurrentPage(1);
+               }}
+             >
+               <SelectTrigger className="w-full sm:w-[180px]">
+                 <SelectValue placeholder="Filter by listing type" />
+               </SelectTrigger>
+               <SelectContent>
+                 <SelectItem value="all">Buy &amp; Rent</SelectItem>
+                 {menu.map((purpose) => (
+                   <SelectItem key={purpose.slug} value={purpose.slug}>
+                     {purpose.label}
+                   </SelectItem>
+                 ))}
+               </SelectContent>
+             </Select>
            </div>
          </CardContent>
        </Card>
@@ -264,11 +298,11 @@
            <CardContent className="py-12 text-center">
              <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
              <p className="text-muted-foreground mb-4">
-               {searchQuery || statusFilter !== 'all'
+               {searchQuery || statusFilter !== 'all' || purposeFilter !== 'all'
                  ? 'No properties match your filters'
                  : 'No properties found. Add your first property!'}
              </p>
-             {!searchQuery && statusFilter === 'all' && (
+             {!searchQuery && statusFilter === 'all' && purposeFilter === 'all' && (
                <Button asChild>
                  <Link to="/admin/properties/add">
                    <Plus className="h-4 w-4 mr-2" />
@@ -289,6 +323,7 @@
                      <TableHead>Title</TableHead>
                      <TableHead>Price</TableHead>
                      <TableHead>Location</TableHead>
+                     <TableHead>Listed for</TableHead>
                      <TableHead>Status</TableHead>
                      <TableHead className="text-center">Featured</TableHead>
                      <TableHead className="text-right">Actions</TableHead>
@@ -320,8 +355,14 @@
                            )}
                          </div>
                        </TableCell>
-                       <TableCell>{formatPrice(property.price)}</TableCell>
+                       <TableCell>
+                         {formatPrice(
+                           property.price,
+                           menu.find((p) => p.slug === property.purpose)?.priceSuffix
+                         )}
+                       </TableCell>
                        <TableCell>{property.location}</TableCell>
+                       <TableCell>{getPurposeBadge(property.purpose)}</TableCell>
                        <TableCell>{getStatusBadge(property.status)}</TableCell>
                        <TableCell className="text-center">
                          <Checkbox

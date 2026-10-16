@@ -1,30 +1,25 @@
  import PropertyCard from './PropertyCard';
  import PropertyCardSkeleton from './PropertyCardSkeleton';
  import EmptyState from './EmptyState';
- 
- interface Property {
-   id: string;
-   slug: string;
-   title: string;
-   project_name: string | null;
-   price: number;
-   location: string;
-   property_type: string;
-   bedrooms: number | null;
-   bathrooms: number | null;
-   area_sqft: number | null;
-   images: string[] | null;
-   status: string;
-   featured: boolean;
- }
+ import type { MenuCategory, MenuPurpose, PropertyListItem } from '@/types/property';
  
  interface PropertyGridProps {
-   properties: Property[];
+   properties: PropertyListItem[];
    loading: boolean;
    onClearFilters?: () => void;
+   hasActiveFilters?: boolean;
+   purpose?: MenuPurpose | null;
+   category?: MenuCategory | null;
  }
  
- const PropertyGrid = ({ properties, loading, onClearFilters }: PropertyGridProps) => {
+ const PropertyGrid = ({
+   properties,
+   loading,
+   onClearFilters,
+   hasActiveFilters,
+   purpose,
+   category,
+ }: PropertyGridProps) => {
    // Shimmer skeleton loading
    if (loading) {
      return (
@@ -38,7 +33,14 @@
  
    // Empty state
    if (properties.length === 0) {
-     return <EmptyState onReset={onClearFilters || (() => {})} />;
+     return (
+       <EmptyState
+         onReset={onClearFilters || (() => {})}
+         hasActiveFilters={hasActiveFilters}
+         purpose={purpose}
+         category={category}
+       />
+     );
    }
  
    return (

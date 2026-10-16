@@ -91,7 +91,8 @@
          description: formData.description.trim(),
          price: parseFloat(formData.price),
          location: formData.location,
-         property_type: formData.propertyType,
+         purpose: formData.purpose,
+         category: formData.category,
          bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
          bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
          area_sqft: formData.areaSqft ? parseInt(formData.areaSqft) : null,
@@ -113,9 +114,13 @@
        navigate('/admin/properties');
      } catch (error) {
        console.error('Error adding property:', error);
+       // The database may reject a combination (constraint / trigger); show why.
+       const reason = (error as { message?: string } | null)?.message;
        toast({
          title: 'Error',
-         description: 'Failed to add property. Please try again.',
+         description: reason
+           ? `Failed to add property: ${reason}`
+           : 'Failed to add property. Please try again.',
          variant: 'destructive',
        });
      } finally {
