@@ -1,4 +1,5 @@
  import HeroSection from '@/components/home/HeroSection';
+ import BuyRentSection from '@/components/home/BuyRentSection';
  import FeaturedProperties from '@/components/home/FeaturedProperties';
  import WhyChooseUs from '@/components/home/WhyChooseUs';
  import TestimonialsSection from '@/components/home/TestimonialsSection';
@@ -12,6 +13,7 @@ import SEO from '@/components/common/SEO';
         description="Discover luxury properties in Karachi with Park Lane Estate. 35+ years of excellence in premium real estate - apartments, bungalows, offices in DHA, Clifton, and more."
       />
        <HeroSection />
+       <BuyRentSection />
        <FeaturedProperties />
        <WhyChooseUs />
        <TestimonialsSection />
